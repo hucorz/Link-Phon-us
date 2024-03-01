@@ -1,33 +1,168 @@
-import AcmeLogo from '@/app/ui/acme-logo';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
+'use client';
 
-export default function Page() {
+import { NextUIProvider, Input, Card, CardBody } from '@nextui-org/react';
+import { useRef, useState } from 'react';
+import { lookupPhonUS } from './lib/dictionary';
+import { Phoneme, splitPhoneme } from './lib/phon';
+import { ifLinkPhon } from './lib/linkPhon';
+import { Span } from 'next/dist/trace';
+
+const Page = () => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  let wordPhons: Phoneme[][] = [];
+  const [showPhon, setShowPhon] = useState<JSX.Element[]>([]);
+  const [showWord, setShowWord] = useState<JSX.Element[]>([]);
+
+  const getPhonString = (phon: Phoneme[]) => {
+    let str = '';
+    for (let p of phon) {
+      str += p.ipa;
+    }
+    return str;
+  };
+
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (inputRef.current) {
+        wordPhons = [];
+        setShowPhon([]);
+        setShowWord([]);
+
+        const sentence = inputRef.current.value;
+        const words = sentence.trim().split(' ');
+        for (let word of words) {
+          const phon = await lookupPhonUS(word);
+          wordPhons.push(splitPhoneme(phon));
+        }
+
+        let isLink: boolean[] = [];
+        let sp: JSX.Element[] = [];
+        let sw: JSX.Element[] = [];
+
+        for (let i = 0; i < wordPhons.length - 1; i++) {
+          isLink.push(ifLinkPhon(wordPhons[i], wordPhons[i + 1]));
+        }
+        isLink.push(false);
+
+        // set showWord
+        for (let i = 0; i < words.length; i++) {
+          if (words[i].length === 1) {
+            sw.push(
+              <span
+                className={
+                  (i > 0 && (isLink[i - 1] || isLink[i])) ||
+                  (i === 0 && isLink[i])
+                    ? 'underline'
+                    : ''
+                }
+                key={sw.length}
+              >
+                {words[i]}
+              </span>,
+            );
+          } else {
+            sw.push(
+              <span
+                className={i > 0 && isLink[i - 1] ? 'underline' : ''}
+                key={sw.length}
+              >
+                {words[i][0]}
+              </span>,
+            );
+            sw.push(<span key={sw.length}>{words[i].slice(1, -1)}</span>);
+            sw.push(
+              <span className={isLink[i] ? 'underline' : ''} key={sw.length}>
+                {words[i][words[i].length - 1]}
+              </span>,
+            );
+            sw.push(
+              <span
+                className={i < words.length - 1 && isLink[i] ? 'underline' : ''}
+                key={sw.length}
+              >
+                {' '}
+              </span>,
+            );
+          }
+        }
+        setShowWord(sw);
+
+        // set showPhon
+        for (let i = 0; i < words.length; i++) {
+          if (wordPhons[i].length === 1) {
+            sp.push(
+              <span
+                className={
+                  (i > 0 && (isLink[i - 1] || isLink[i])) ||
+                  (i === 0 && isLink[i])
+                    ? 'underline'
+                    : ''
+                }
+                key={sp.length}
+              >
+                {getPhonString(wordPhons[i])}
+              </span>,
+            );
+          } else {
+            sp.push(
+              <span
+                className={i > 0 && isLink[i - 1] ? 'underline' : ''}
+                key={sp.length}
+              >
+                {getPhonString(wordPhons[i].slice(0, 1))}
+              </span>,
+            );
+            sp.push(
+              <span key={sp.length}>
+                {getPhonString(wordPhons[i].slice(1, -1))}
+              </span>,
+            );
+            sp.push(
+              <span className={isLink[i] ? 'underline' : ''} key={sp.length}>
+                {getPhonString(wordPhons[i].slice(-1))}
+              </span>,
+            );
+            if (i < words.length - 1) {
+              sp.push(
+                <span className="underline" key={sp.length}>
+                  {' '}
+                </span>,
+              );
+            }
+          }
+        }
+        setShowPhon(sp);
+      }
+    }
+  };
   return (
-    <main className="flex min-h-screen flex-col p-6">
-      <div className="flex h-20 shrink-0 items-end rounded-lg bg-blue-500 p-4 md:h-52">
-        {/* <AcmeLogo /> */}
-      </div>
-      <div className="mt-4 flex grow flex-col gap-4 md:flex-row">
-        <div className="flex flex-col justify-center gap-6 rounded-lg bg-gray-50 px-6 py-10 md:w-2/5 md:px-20">
-          <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
-            <strong>Welcome to Acme.</strong> This is the example for the{' '}
-            <a href="https://nextjs.org/learn/" className="text-blue-500">
-              Next.js Learn Course
-            </a>
-            , brought to you by Vercel.
-          </p>
-          <Link
-            href="/login"
-            className="flex items-center gap-5 self-start rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-400 md:text-base"
-          >
-            <span>Log in</span> <ArrowRightIcon className="w-5 md:w-6" />
-          </Link>
+    <NextUIProvider>
+      <main className="flex min-h-screen flex-col p-6">
+        <div className="flex w-full flex-wrap gap-4 md:flex-nowrap">
+          <Input
+            type="text"
+            label="Sentence"
+            ref={inputRef}
+            onKeyDown={handleKeyDown}
+          />
         </div>
-        <div className="flex items-center justify-center p-6 md:w-3/5 md:px-28 md:py-12">
-          {/* Add Hero Images Here */}
+        <div className="mt-10">
+          <Card>
+            <CardBody>
+              <p>{showPhon}</p>
+            </CardBody>
+          </Card>
         </div>
-      </div>
-    </main>
+        <div className="mt-10">
+          <Card>
+            <CardBody>
+              <p>{showWord}</p>
+            </CardBody>
+          </Card>
+        </div>
+      </main>
+    </NextUIProvider>
   );
-}
+};
+
+export default Page;
