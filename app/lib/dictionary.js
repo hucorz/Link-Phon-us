@@ -4,8 +4,10 @@ import * as cheerio from 'cheerio';
 import path from "path"
 
 const Mdict = require('js-mdict');
+
 const dictFilename = '牛津高阶英汉双解词典（第10版）V3.mdx';
-const dictPath = path.join(process.cwd(), 'data', dictFilename);
+const dictPath = path.join(process.cwd(), 'public', dictFilename);
+// console.log('dictPath:', dictPath);
 const mdict = new Mdict.default(dictPath);
 
 export const lookupPhonUS = async (word) => {
