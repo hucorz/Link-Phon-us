@@ -1,12 +1,19 @@
-"use server";
+'use server';
 
 import * as cheerio from 'cheerio';
-import path from "path"
+import path from 'path';
 
 const Mdict = require('js-mdict');
 
-const dictFilename = '牛津高阶英汉双解词典（第10版）V3.mdx';
-const dictPath = path.join(process.cwd(), 'public', dictFilename);
+let dictPath;
+if (process.env.NODE_ENV === 'production') {
+  const dictFilename = '牛津高阶英汉双解词典（第10版）V3.mdx';
+  dictPath = path.join(process.cwd(), dictFilename);
+} else {
+  const dictFilename = '牛津高阶英汉双解词典（第10版）V3.mdx';
+  dictPath = path.join(process.cwd(), 'public', dictFilename);
+}
+
 // console.log('dictPath:', dictPath);
 const mdict = new Mdict.default(dictPath);
 
@@ -18,10 +25,12 @@ export const lookupPhonUS = async (word) => {
   // fs.writeFileSync('phon-us.html', htmlString);
   const $ = cheerio.load(htmlString);
   // 找到第一个 class="pracpron" 的元素的第一个子元素, 再找到第一个 (class="phon-us" 或 class="phon-usgb") 的元素
-  const phonUsElement = $('.top-container:first').find('.phons_n_am:first').find('.phon:first');
+  const phonUsElement = $('.top-container:first')
+    .find('.phons_n_am:first')
+    .find('.phon:first');
   if (phonUsElement.length > 0) {
     return phonUsElement.text();
   } else {
     return '找不到美式音标';
   }
-}
+};
