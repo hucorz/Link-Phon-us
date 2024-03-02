@@ -2,13 +2,15 @@
 
 import * as cheerio from 'cheerio';
 import path from 'path';
+import getConfig from 'next/config'
+const { serverRuntimeConfig } = getConfig()
 
 const Mdict = require('js-mdict');
 
 let dictPath;
 if (process.env.NODE_ENV === 'production') {
   const dictFilename = 'OxfordAdvancedDictionary(10thEdition)V3.mdx';
-  dictPath = path.join(process.cwd(), dictFilename);
+  dictPath = path.join(serverRuntimeConfig.PROJECT_ROOT, dictFilename);
 } else {
   const dictFilename = 'OxfordAdvancedDictionary(10thEdition)V3.mdx';
   dictPath = path.join(process.cwd(), 'public', dictFilename);
