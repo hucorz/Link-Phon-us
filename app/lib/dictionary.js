@@ -7,10 +7,10 @@ const Mdict = require('js-mdict');
 
 let dictPath;
 if (process.env.NODE_ENV === 'production') {
-  const dictFilename = '牛津高阶英汉双解词典（第10版）V3.mdx';
+  const dictFilename = 'OxfordAdvancedDictionary(10thEdition)V3.mdx';
   dictPath = path.join(process.cwd(), dictFilename);
 } else {
-  const dictFilename = '牛津高阶英汉双解词典（第10版）V3.mdx';
+  const dictFilename = 'OxfordAdvancedDictionary(10thEdition)V3.mdx';
   dictPath = path.join(process.cwd(), 'public', dictFilename);
 }
 
